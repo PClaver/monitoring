@@ -385,7 +385,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service=\"sa_deals_2\"}",
+          "expr": "{project=\"sa_deals_2\"}",
           "refId": "A"
         }
       ]
@@ -409,7 +409,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service=\"pmgpc\"}",
+          "expr": "{project=\"pmgpc\"}",
           "refId": "A"
         }
       ]
@@ -433,7 +433,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service=\"oshun\"}",
+          "expr": "{project=\"oshun\"}",
           "refId": "A"
         }
       ]
