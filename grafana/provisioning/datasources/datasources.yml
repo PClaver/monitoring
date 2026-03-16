@@ -1,0 +1,25 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus - Server 1
+    type: prometheus
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      httpMethod: POST
+
+  - name: Loki
+    type: loki
+    url: http://loki:3100
+
+# -------------------------------------------------------
+# When you add a second server, add its Prometheus here.
+# Grafana dashboards can then use a $datasource variable
+# to switch between servers.
+#
+#  - name: Prometheus - Server 2
+#    type: prometheus
+#    url: http://SERVER_2_IP:9090
+#    jsonData:
+#      httpMethod: POST
+# -------------------------------------------------------

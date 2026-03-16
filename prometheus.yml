@@ -1,7 +1,48 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/alerts.yml
 
 scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+    # label all metrics with the server name for multi-server filtering
+    relabel_configs:
+      - target_label: server
+        replacement: 'server-1'
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - target_label: server
+        replacement: 'server-1'
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    relabel_configs:
+      - target_label: server
+        replacement: 'server-1'
+
+# -------------------------------------------------------
+# To add a second server, install node-exporter, cadvisor,
+# and nginx-exporter on that server and add entries below.
+# Then add that server's Prometheus as a new data source
+# in Grafana so you can switch between servers.
+#
+#  - job_name: 'cadvisor-server-2'
+#    static_configs:
+#      - targets: ['SERVER_2_IP:8080']
+#    relabel_configs:
+#      - target_label: server
+#        replacement: 'server-2'
+# -------------------------------------------------------

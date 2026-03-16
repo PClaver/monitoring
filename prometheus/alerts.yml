@@ -1,0 +1,87 @@
+groups:
+  - name: containers
+    rules:
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~"sa_deals_2|pmgpc|oshun"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} is down"
+          description: "Container {{ $labels.name }} has not been seen for more than 1 minute."
+
+      - alert: ContainerHighCPU
+        expr: |
+          sum(rate(container_cpu_usage_seconds_total{name=~"sa_deals_2|pmgpc|oshun"}[5m])) by (name)
+          / sum(container_spec_cpu_quota{name=~"sa_deals_2|pmgpc|oshun"} / container_spec_cpu_period{name=~"sa_deals_2|pmgpc|oshun"}) by (name)
+          * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.name }}"
+          description: "{{ $labels.name }} CPU usage is above 80% for 5 minutes."
+
+      - alert: ContainerHighMemory
+        expr: |
+          (container_memory_usage_bytes{name=~"sa_deals_2|pmgpc|oshun"}
+          / container_spec_memory_limit_bytes{name=~"sa_deals_2|pmgpc|oshun"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory on {{ $labels.name }}"
+          description: "{{ $labels.name }} memory usage is above 80% for 5 minutes."
+
+      - alert: ContainerRestarting
+        expr: increase(container_start_time_seconds{name=~"sa_deals_2|pmgpc|oshun"}[30m]) > 2
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.name }} is restarting frequently"
+          description: "{{ $labels.name }} has restarted more than twice in the last 30 minutes."
+
+  - name: host
+    rules:
+      - alert: HostHighCPU
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on host"
+          description: "Host CPU usage is above 85% for 5 minutes."
+
+      - alert: HostHighMemory
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory on host"
+          description: "Host memory usage is above 85% for 5 minutes."
+
+      - alert: HostDiskRunningFull
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk running low"
+          description: "Host disk has less than 15% free space."
+
+  - name: nginx
+    rules:
+      - alert: NginxHighErrorRate
+        expr: |
+          sum(rate(nginx_http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(nginx_http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High nginx 5xx error rate"
+          description: "More than 5% of requests are returning 5xx errors."
