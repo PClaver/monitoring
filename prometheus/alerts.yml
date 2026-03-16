@@ -11,27 +11,29 @@ groups:
           description: "Container {{ $labels.name }} has not been seen for more than 1 minute."
 
       - alert: ContainerHighCPU
+        # Measures CPU cores used — 0.8 = 80% of 1 core.
+        # Adjust threshold based on your server's core count.
         expr: |
-          sum(rate(container_cpu_usage_seconds_total{name=~"sa_deals_2|pmgpc|oshun"}[5m])) by (name)
-          / sum(container_spec_cpu_quota{name=~"sa_deals_2|pmgpc|oshun"} / container_spec_cpu_period{name=~"sa_deals_2|pmgpc|oshun"}) by (name)
-          * 100 > 80
+          sum by(name) (
+            rate(container_cpu_usage_seconds_total{name=~"sa_deals_2|pmgpc|oshun"}[5m])
+          ) > 0.8
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "High CPU on {{ $labels.name }}"
-          description: "{{ $labels.name }} CPU usage is above 80% for 5 minutes."
+          description: "{{ $labels.name }} is using more than 0.8 CPU cores for 5 minutes."
 
       - alert: ContainerHighMemory
+        # Triggers if a container uses more than 500MB. Adjust to fit your server.
         expr: |
-          (container_memory_usage_bytes{name=~"sa_deals_2|pmgpc|oshun"}
-          / container_spec_memory_limit_bytes{name=~"sa_deals_2|pmgpc|oshun"}) * 100 > 80
+          container_memory_working_set_bytes{name=~"sa_deals_2|pmgpc|oshun"} > 500 * 1024 * 1024
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "High memory on {{ $labels.name }}"
-          description: "{{ $labels.name }} memory usage is above 80% for 5 minutes."
+          description: "{{ $labels.name }} memory usage is above 500MB for 5 minutes."
 
       - alert: ContainerRestarting
         expr: increase(container_start_time_seconds{name=~"sa_deals_2|pmgpc|oshun"}[30m]) > 2
@@ -65,7 +67,8 @@ groups:
 
       - alert: HostDiskRunningFull
         expr: |
-          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+          (node_filesystem_avail_bytes{mountpoint="/"}
+          / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
         for: 5m
         labels:
           severity: critical

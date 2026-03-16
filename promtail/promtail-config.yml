@@ -24,18 +24,13 @@ scrape_configs:
     pipeline_stages:
       - docker: {}
 
-      # Parse nginx access logs for request time and status
+      # Parse nginx access logs — extracts method and status as labels
+      # so you can filter/count by them in Grafana
       - match:
           selector: '{container="gateway"}'
           stages:
             - regex:
-                expression: '^(?P<remote_addr>\S+) - \S+ \[[^\]]+\] "(?P<method>\S+) (?P<path>\S+)[^"]*" (?P<status>\d+) \d+ "[^"]*" "[^"]*"( (?P<request_time>[\d.]+))?'
+                expression: '^(?P<remote_addr>\S+) - \S+ \[[^\]]+\] "(?P<method>\S+) (?P<path>[^"?\s]*)[^"]*" (?P<status>\d+) \d+ "[^"]*" "[^"]*"( (?P<request_time>[\d.]+))?'
             - labels:
                 method:
                 status:
-            - template:
-                source: path
-                # strip query strings to avoid high cardinality
-                template: '{{ regexReplaceAll "\\?.*" .Value "" }}'
-            - labels:
-                path:
